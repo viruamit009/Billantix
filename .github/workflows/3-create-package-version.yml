@@ -53,6 +53,7 @@ jobs:
           set +e
           sf package version create \
             --package Billantix \
+            --definition-file config/project-scratch-def.json \
             --installation-key-bypass \
             --code-coverage \
             --wait 90 \
