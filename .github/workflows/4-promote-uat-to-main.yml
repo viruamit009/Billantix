@@ -1,4 +1,4 @@
-name: 5. Promote UAT to Main
+name: 4. Promote UAT to Main
 
 on:
   workflow_dispatch: {}
