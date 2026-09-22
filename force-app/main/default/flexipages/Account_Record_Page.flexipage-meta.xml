@@ -136,9 +136,6 @@
                             <value>CreateIncident</value>
                         </valueListItems>
                         <valueListItems>
-                            <value>ScheduleAppointment</value>
-                        </valueListItems>
-                        <valueListItems>
                             <value>SmsHighlightAction</value>
                         </valueListItems>
                         <valueListItems>
