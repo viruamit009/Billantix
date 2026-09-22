@@ -35,13 +35,7 @@ jobs:
 
       - name: Ensure package is registered on Dev Hub
         run: |
-          EXISTING_ID=$(sf package list --target-dev-hub devhub --json \
-            | python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-match = [p for p in data.get('result', []) if p.get('NamespacePrefix') == 'Billantix']
-print(match[0]['Id'] if match else '')
-")
+          EXISTING_ID=$(sf package list --target-dev-hub devhub --json | jq -r '.result[] | select(.NamespacePrefix == "Billantix") | .Id' | head -n1)
           if [ -z "$EXISTING_ID" ]; then
             echo "No package registered for namespace 'Billantix' on this Dev Hub — creating it."
             sf package create \
