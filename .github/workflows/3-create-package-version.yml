@@ -35,6 +35,7 @@ jobs:
 
       - name: Create package version
         run: |
+          set +e
           sf package version create \
             --package Billantix \
             --installation-key-bypass \
@@ -42,9 +43,13 @@ jobs:
             --wait 90 \
             --target-dev-hub devhub \
             --json > version-create-result.json
+          CLI_EXIT_CODE=$?
+          set -e
           cat version-create-result.json
+          exit $CLI_EXIT_CODE
 
       - name: Upload result
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: package-version-create-result
