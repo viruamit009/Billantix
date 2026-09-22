@@ -30,6 +30,7 @@ jobs:
         run: |
           sf project deploy validate \
             --target-org devorg \
+            --source-dir force-app \
             --test-level RunLocalTests \
             --wait 60
 
@@ -54,5 +55,6 @@ jobs:
         run: |
           sf project deploy start \
             --target-org devorg \
+            --source-dir force-app \
             --test-level RunLocalTests \
             --wait 60
