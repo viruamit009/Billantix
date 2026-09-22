@@ -1,0 +1,30 @@
+:host {
+    display: block;
+}
+
+.action-wrapper {
+    display: flex;
+    flex-direction: column;
+    min-height: 70vh;
+}
+
+.action-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #dddbda;
+    background: #f3f2f2;
+}
+
+.action-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #16325c;
+}
+
+.action-body {
+    flex: 1;
+    overflow: auto;
+    padding: 0;
+}

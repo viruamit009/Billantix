@@ -1,0 +1,66 @@
+.dashboard-container {
+    min-width: 860px;
+}
+
+.dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: #f3f3f3;
+    border-bottom: 1px solid #dddbda;
+    border-radius: 4px 4px 0 0;
+}
+
+.close-btn {
+    margin-left: auto;
+}
+
+.tab-content {
+    min-height: 280px;
+    padding-top: 0.75rem;
+}
+
+/* Stat cards */
+.stat-card {
+    background: #fff;
+    border: 1px solid #dddbda;
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #706e6b;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin: 0 0 0.25rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.stat-value.blue   { color: #0176d3; }
+.stat-value.green  { color: #2e844a; }
+.stat-value.orange { color: #dd7a01; }
+.stat-value.red    { color: #ba0517; }
+
+.last-payment {
+    font-size: 0.875rem;
+    color: #3e3e3c;
+    display: flex;
+    align-items: center;
+}
+
+.empty-msg {
+    text-align: center;
+    color: #706e6b;
+    padding: 2rem;
+    font-size: 0.875rem;
+}

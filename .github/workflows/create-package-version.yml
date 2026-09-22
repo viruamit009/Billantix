@@ -1,0 +1,61 @@
+name: Create Package Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionDescription:
+        description: "Optional description for this package version"
+        required: false
+        default: ""
+
+concurrency:
+  group: package-version-create
+  cancel-in-progress: false
+
+jobs:
+  create-version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli
+
+      - name: Authenticate to Dev Hub
+        run: |
+          echo "${{ secrets.DEVHUB_SFDX_AUTH_URL }}" > ./DEVHUB_AUTH_URL.txt
+          sf org login sfdx-url -f ./DEVHUB_AUTH_URL.txt -a devhub --set-default-dev-hub
+          rm -f ./DEVHUB_AUTH_URL.txt
+
+      - name: Create package version
+        run: |
+          sf package version create \
+            --package Billantix \
+            --installation-key-bypass \
+            --code-coverage \
+            --wait 90 \
+            --target-dev-hub devhub \
+            --json > version-create-result.json
+          cat version-create-result.json
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-version-create-result
+          path: version-create-result.json
+
+      - name: Commit updated sfdx-project.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- sfdx-project.json; then
+            git add sfdx-project.json
+            git commit -m "chore: record new Billantix package version [skip ci]"
+            git push
+          fi

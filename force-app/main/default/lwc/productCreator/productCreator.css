@@ -1,0 +1,61 @@
+.creator-root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: #f3f2f2;
+}
+
+.top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: #ffffff;
+    border-bottom: 1px solid #dddbda;
+    flex-shrink: 0;
+}
+.top-bar__left {
+    display: flex;
+    align-items: center;
+}
+
+.error-banner {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 1.25rem;
+    background: #fce8e8;
+    border-left: 4px solid #c23934;
+    color: #c23934;
+    font-size: 0.8125rem;
+}
+
+.form-card {
+    margin: 1.25rem auto;
+    width: 100%;
+    max-width: 720px;
+    background: #ffffff;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    padding: 1.25rem 1.5rem;
+}
+
+.form-section-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #3e3e3c;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #f3f2f2;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 1.25rem;
+}
+
+.form-field--full {
+    grid-column: 1 / -1;
+}

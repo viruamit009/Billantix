@@ -1,0 +1,195 @@
+<template>
+    <div class="editor-root">
+
+        <!-- ── Page Header ───────────────────────────────────────── -->
+        <div class="page-header">
+            <div class="page-header__title">
+                <h1 class="page-title">{quoteTitle}</h1>
+                <span class="page-sub">{pageSubtitle}</span>
+            </div>
+            <div class="step-wizard">
+                <div class="step step--active" onclick={handleGoToGeneral}>
+                    <div class="step-dot step-dot--active"></div>
+                    <span class="step-label step-label--active">General Information</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step" onclick={handleGoToLines}>
+                    <div class="step-dot"></div>
+                    <span class="step-label">Edit Lines</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step">
+                    <div class="step-dot"></div>
+                    <span class="step-label">Create Order</span>
+                </div>
+            </div>
+            <div class="page-header__actions">
+                <lightning-button label="Quick Save" onclick={handleQuickSave} disabled={saving} class="slds-var-m-right_x-small"></lightning-button>
+                <lightning-button variant="brand" label="Save and Next" icon-name="utility:forward" icon-position="right" onclick={handleSaveAndNext} disabled={saving}></lightning-button>
+            </div>
+        </div>
+
+        <!-- Error -->
+        <template lwc:if={errorMsg}>
+            <div class="error-banner" role="alert">
+                <lightning-icon icon-name="utility:error" alternative-text="Error" size="x-small" class="slds-var-m-right_x-small"></lightning-icon>
+                {errorMsg}
+            </div>
+        </template>
+
+        <!-- Loading -->
+        <template lwc:if={isLoading}>
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </template>
+
+        <template lwc:if={isReady}>
+            <div class="page-body">
+                <div class="gi-layout">
+
+                    <!-- LEFT: General Information -->
+                    <div class="gi-section-card">
+                        <div class="gi-section-title">General Information</div>
+
+                        <!-- Account (readonly) -->
+                        <div class="form-field slds-m-bottom_small">
+                            <div class="readonly-field">
+                                <div class="readonly-label">Account</div>
+                                <div class="readonly-input">{accountName}</div>
+                            </div>
+                        </div>
+
+                        <!-- Opportunity lookup -->
+                        <div class="form-field slds-m-bottom_small">
+                            <lightning-record-picker
+                                label="Opportunity"
+                                placeholder="Search Opportunity..."
+                                object-api-name="Opportunity"
+                                value={opportunityId}
+                                onchange={handleOpportunityChange}>
+                            </lightning-record-picker>
+                        </div>
+
+                        <!-- Pricebook -->
+                        <div class="form-field slds-m-bottom_small">
+                            <lightning-record-picker
+                                label="Price Book"
+                                placeholder="Search Price Book..."
+                                object-api-name="Pricebook2"
+                                value={selectedPricebook2Id}
+                                onchange={handlePricebookChange}>
+                            </lightning-record-picker>
+                        </div>
+
+                        <!-- Quote Name -->
+                        <div class="form-field slds-m-bottom_small">
+                            <lightning-input
+                                label="Quote Name"
+                                value={quoteName}
+                                required
+                                onchange={handleNameChange}>
+                            </lightning-input>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="form-field slds-m-bottom_small">
+                            <lightning-textarea
+                                label="Description"
+                                value={description}
+                                onchange={handleDescriptionChange}
+                                max-length="1000">
+                            </lightning-textarea>
+                        </div>
+
+                        <!-- Dates -->
+                        <div class="date-row">
+                            <lightning-input type="date" label="Expiration Date" value={expirationDate} onchange={handleExpirationDateChange}></lightning-input>
+                            <lightning-input type="date" label="Start Date" value={startDate} onchange={handleStartDateChange}></lightning-input>
+                        </div>
+                    </div>
+
+                    <!-- MIDDLE: Status + Customer Card -->
+                    <div class="gi-middle">
+                        <lightning-combobox
+                            label="Status"
+                            value={status}
+                            options={statusOptions}
+                            onchange={handleStatusChange}
+                            variant="label-hidden"
+                            placeholder="Status...">
+                        </lightning-combobox>
+                        <div class="customer-card">
+                            <div class="customer-avatar">
+                                <lightning-icon icon-name="standard:account" size="large"></lightning-icon>
+                            </div>
+                            <div class="customer-name">{accountName}</div>
+                            <template lwc:if={pageSubtitle}>
+                                <div class="customer-opp">{pageSubtitle}</div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Billing Address + Bill To Contact -->
+                    <div class="gi-right-col">
+                        <div class="gi-section-card">
+                            <div class="gi-section-title">Billing Address</div>
+                            <div class="form-field slds-m-bottom_small">
+                                <lightning-input label="Bill To Street" value={billingStreet} data-field="billingStreet" onchange={handleBillingChange}></lightning-input>
+                            </div>
+                            <div class="billing-3col">
+                                <lightning-input label="Bill To City" value={billingCity} data-field="billingCity" onchange={handleBillingChange}></lightning-input>
+                                <lightning-input label="Bill To State" value={billingState} data-field="billingState" onchange={handleBillingChange}></lightning-input>
+                                <lightning-input label="Bill To Zip" value={billingPostalCode} data-field="billingPostalCode" onchange={handleBillingChange}></lightning-input>
+                            </div>
+                            <div class="form-field" style="margin-top:0.75rem">
+                                <lightning-input label="Bill To Country" value={billingCountry} data-field="billingCountry" onchange={handleBillingChange}></lightning-input>
+                            </div>
+                        </div>
+                        <div class="gi-section-card" style="margin-top:1rem">
+                            <div class="gi-section-title">Bill To Contact</div>
+                            <div class="contact-search-row">
+                                <lightning-input
+                                    label="Bill To Contact"
+                                    variant="label-hidden"
+                                    placeholder="Search Bill To Contact..."
+                                    value={contactSearch}
+                                    onchange={handleContactSearchChange}
+                                    class="flex-1">
+                                </lightning-input>
+                                <lightning-button label="Search" onclick={handleContactSearch}></lightning-button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Opportunity Section (expandable details) -->
+                <template lwc:if={hasOpportunity}>
+                    <div class="opp-section">
+                        <div class="opp-section-header" onclick={handleToggleOpp}>
+                            <span class="gi-section-title opp-title">Opportunity</span>
+                            <lightning-icon icon-name={oppToggleIcon} size="x-small" class="slds-m-left_x-small"></lightning-icon>
+                        </div>
+                        <template lwc:if={oppExpanded}>
+                            <div class="opp-details">
+                                <div class="opp-detail-item">
+                                    <span class="opp-label">Name</span>
+                                    <span class="opp-value">{quote.Opportunity.Name}</span>
+                                </div>
+                                <div class="opp-detail-item">
+                                    <span class="opp-label">Stage</span>
+                                    <span class="opp-value">{quote.Opportunity.StageName}</span>
+                                </div>
+                                <div class="opp-detail-item">
+                                    <span class="opp-label">Close Date</span>
+                                    <span class="opp-value">{quote.Opportunity.CloseDate}</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+            </div>
+        </template>
+
+    </div>
+</template>

@@ -1,0 +1,228 @@
+<template>
+    <div class="editor-root">
+
+        <!-- ── Top Header ───────────────────────────────────────── -->
+        <div class="page-header">
+            <div class="page-header__title">
+                <h1 class="quote-name">{orderNumber}
+                    <lightning-icon icon-name="utility:edit" size="xx-small" class="edit-icon"></lightning-icon>
+                </h1>
+                <span class="quote-number">{accountName}</span>
+            </div>
+            <!-- Step Wizard -->
+            <div class="step-wizard">
+                <div class="step" onclick={handleGoToGeneral}>
+                    <div class={stepDotGeneral}></div>
+                    <span class={stepLabelGeneral}>General Information</span>
+                </div>
+                <div class="step-line"></div>
+                <div class="step step--active">
+                    <div class="step-dot step-dot--active"></div>
+                    <span class="step-label step-label--active">Edit Lines</span>
+                </div>
+            </div>
+            <div class="page-header__actions">
+                <lightning-button label="Cancel" onclick={handleCancel} class="slds-var-m-right_x-small"></lightning-button>
+                <lightning-button variant="brand" label="Save" onclick={handleSave} disabled={isLoading}></lightning-button>
+            </div>
+        </div>
+
+        <!-- Error Banner -->
+        <template lwc:if={errorMessage}>
+            <div class="error-banner" role="alert">
+                <lightning-icon icon-name="utility:error" alternative-text="Error" size="x-small" class="slds-var-m-right_x-small"></lightning-icon>
+                {errorMessage}
+            </div>
+        </template>
+
+        <!-- Loading -->
+        <template lwc:if={isLoading}>
+            <lightning-spinner alternative-text="Loading..." size="medium"></lightning-spinner>
+        </template>
+
+        <template lwc:if={isReady}>
+            <div class="page-body">
+
+                <!-- ── Form + Summary (single card) ─────────────── -->
+                <div class="header-card">
+
+                    <!-- Fields: 3-column grid -->
+                    <div class="header-fields">
+                        <div class="form-field">
+                            <lightning-record-picker
+                                label="Price Book"
+                                placeholder="Search Price Book..."
+                                object-api-name="Pricebook2"
+                                value={selectedPricebook2Id}
+                                onchange={handlePricebookChange}>
+                            </lightning-record-picker>
+                        </div>
+                        <div class="form-field">
+                            <lightning-input
+                                type="date"
+                                label="Effective Date"
+                                value={startDate}
+                                onchange={handleHeaderChange}
+                                data-field="EffectiveDate">
+                            </lightning-input>
+                        </div>
+                        <div class="form-field">
+                            <lightning-input
+                                type="date"
+                                label="End Date"
+                                value={endDate}
+                                onchange={handleHeaderChange}
+                                data-field="EndDate">
+                            </lightning-input>
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="header-divider"></div>
+
+                    <!-- Right: price summary -->
+                    <div class="header-summary">
+                        <div class="summary-row">
+                            <span class="summary-row__label">Subtotal</span>
+                            <span class="summary-row__value">{subtotalFormatted}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-row__label">Discount</span>
+                            <span class="summary-row__value">{discountTotalFormatted}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="summary-row__label">Tax</span>
+                            <span class="summary-row__value">$0.00</span>
+                        </div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-total-label">TOTAL AMOUNT</div>
+                        <div class="summary-total-value">{netTotalFormatted}</div>
+                    </div>
+
+                </div><!-- end header-card -->
+
+                <!-- ── Lines Section ─────────────────────────────── -->
+                <div class="lines-section">
+                <div class="lines-wrapper">
+
+                    <!-- Lines Table Area -->
+                    <div class={linesAreaClass}
+                        ondragover={handleDragOver}
+                        ondragleave={handleDragLeave}
+                        ondrop={handleDrop}>
+
+                        <div class="lines-toolbar">
+                            <span class="lines-count">{lineCount} item(s)</span>
+                        </div>
+
+                        <template lwc:if={hasLines}>
+                            <div class="table-scroll">
+                                <table class="ql-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="col-act">ACTIONS</th>
+                                            <th class="col-name">PRODUCT NAME</th>
+                                            <th class="col-listprice">LIST PRICE</th>
+                                            <th class="col-netsales">NET SALES PRICE</th>
+                                            <th class="col-qty">QUANTITY</th>
+                                            <th class="col-term">BILLING PERIOD</th>
+                                            <th class="col-start">START DATE</th>
+                                            <th class="col-end">END DATE</th>
+                                            <th class="col-disc">DISCOUNT %</th>
+                                            <th class="col-total">TOTAL AMOUNT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={lines} for:item="line">
+                                            <tr key={line.tempId} class={line.rowClass}
+                                                onclick={handleRowClick}
+                                                data-tempid={line.tempId}>
+                                                <td class="col-act">
+                                                    <div class="row-actions">
+                                                        <span class="row-radio"></span>
+                                                        <lightning-button-icon icon-name="utility:add" variant="bare" size="x-small"
+                                                            alternative-text="Duplicate" data-tempid={line.tempId}></lightning-button-icon>
+                                                        <lightning-button-icon icon-name="utility:delete" variant="bare" size="x-small"
+                                                            alternative-text="Remove" data-tempid={line.tempId}
+                                                            onclick={handleRemoveLine}></lightning-button-icon>
+                                                    </div>
+                                                </td>
+                                                <td class="col-name">
+                                                    <template lwc:if={line.isBundleComponent}>
+                                                        <span class="bundle-indent">&#8627;</span>
+                                                    </template>
+                                                    <template lwc:if={line.isBundle}>
+                                                        <span class="bundle-badge">Bundle</span>
+                                                    </template>
+                                                    <span class="product-name-text">{line.productName}</span>
+                                                </td>
+                                                <td class="col-listprice cell-readonly">{line.listPriceFormatted}</td>
+                                                <td class="col-netsales">
+                                                    <lightning-input type="number" value={line.UnitPrice} formatter="currency"
+                                                        step="0.01" min="0" data-tempid={line.tempId} data-field="UnitPrice"
+                                                        onchange={handleLineFieldChange} variant="label-hidden"
+                                                        class="cell-input">
+                                                    </lightning-input>
+                                                </td>
+                                                <td class={line.qtyClass}>
+                                                    <lightning-input type="number" value={line.Quantity} min="0" step="1"
+                                                        data-tempid={line.tempId} data-field="Quantity"
+                                                        onchange={handleLineFieldChange} variant="label-hidden"
+                                                        class="cell-input">
+                                                    </lightning-input>
+                                                </td>
+                                                <td class="col-term cell-readonly">{billingPeriod}</td>
+                                                <td class="col-start cell-readonly">{startDate}</td>
+                                                <td class="col-end cell-readonly">{endDate}</td>
+                                                <td class="col-disc">
+                                                    <lightning-input type="number" value={line.Discount} min="0" max="100"
+                                                        step="0.01" data-tempid={line.tempId} data-field="Discount"
+                                                        onchange={handleLineFieldChange} variant="label-hidden"
+                                                        class="cell-input">
+                                                    </lightning-input>
+                                                </td>
+                                                <td class="col-total cell-total">{line.lineTotalFormatted}</td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+
+                        <template lwc:if={isEmpty}>
+                            <div class="drop-prompt">
+                                <lightning-icon icon-name="utility:drag_and_drop" size="large" class="drop-prompt__icon"></lightning-icon>
+                                <p class="slds-text-heading_small slds-var-m-top_small">Drag products here or click Add Line</p>
+                            </div>
+                        </template>
+
+                    </div><!-- end lines-area -->
+
+                    <!-- Add Product Tab — on right edge of lines card -->
+                    <button class="product-tab" onclick={handleToggleProductPanel}>
+                        <span class="product-tab__text">Add new Product</span>
+                    </button>
+
+                    <!-- Product Panel Drawer -->
+                    <div class={productPanelClass}>
+                        <div class="product-panel-header">
+                            <span class="product-panel-title">Products</span>
+                            <lightning-button-icon icon-name="utility:close" variant="bare"
+                                alternative-text="Close" onclick={handleToggleProductPanel}>
+                            </lightning-button-icon>
+                        </div>
+                        <c-product-selector
+                            products={allProducts}
+                            onproductselect={handleProductSelect}
+                            ondragstart={handleProductDragStart}>
+                        </c-product-selector>
+                    </div>
+
+                </div><!-- end lines-wrapper -->
+                </div><!-- end lines-section -->
+
+            </div><!-- end page-body -->
+        </template>
+
+    </div>
+</template>

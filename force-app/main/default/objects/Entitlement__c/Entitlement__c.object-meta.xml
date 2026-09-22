@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <label>Entitlement</label>
+    <nameField>
+        <displayFormat>ENT-{0000}</displayFormat>
+        <label>Entitlement Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Entitlements</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

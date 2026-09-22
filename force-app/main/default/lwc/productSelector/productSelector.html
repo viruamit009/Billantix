@@ -1,0 +1,94 @@
+<template>
+    <div class="ps-root">
+
+        <!-- Header -->
+        <div class="ps-header">
+            <lightning-icon icon-name="standard:product" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+            <span class="ps-title">Products</span>
+            <span class="ps-count">{productCount}</span>
+        </div>
+
+        <!-- Search -->
+        <div class="ps-search">
+            <lightning-input
+                type="search"
+                placeholder="Search by name or type..."
+                value={searchTerm}
+                onchange={handleSearch}
+                variant="label-hidden">
+            </lightning-input>
+        </div>
+
+        <!-- Category Tabs -->
+        <div class="ps-tabs" role="tablist">
+            <template for:each={categories} for:item="cat">
+                <button
+                    key={cat.value}
+                    class={cat.cls}
+                    data-value={cat.value}
+                    onclick={handleCatChange}
+                    role="tab"
+                    type="button">
+                    {cat.label}
+                </button>
+            </template>
+        </div>
+
+        <!-- Product List -->
+        <div class="ps-list">
+            <template for:each={visibleProducts} for:item="prod">
+                <div
+                    key={prod.entryId}
+                    class={prod.cardCls}
+                    draggable="true"
+                    data-entryid={prod.entryId}
+                    ondragstart={handleDragStart}
+                    title={prod.name}>
+
+                    <div class="ps-card__info">
+                        <div class="ps-card__name">{prod.name}</div>
+                        <div class="ps-card__meta">
+                            <template lwc:if={prod.isBundle}>
+                                <span class="badge-bundle">Bundle</span>
+                            </template>
+                            <template lwc:else>
+                                <template lwc:if={prod.productType}>
+                                    <span class="badge-type">{prod.productType}</span>
+                                </template>
+                            </template>
+                            <template lwc:if={prod.uom}>
+                                <span class="ps-uom">&middot; {prod.uom}</span>
+                            </template>
+                        </div>
+                        <div class="ps-card__price">{prod.priceFormatted}</div>
+                    </div>
+
+                    <button
+                        class="ps-add-btn"
+                        type="button"
+                        data-entryid={prod.entryId}
+                        onclick={handleAddClick}
+                        title="Add to quote"
+                        aria-label="Add">
+                        +
+                    </button>
+                </div>
+            </template>
+
+            <template lwc:if={noResults}>
+                <div class="ps-empty">
+                    <lightning-icon icon-name="utility:search" size="small" class="slds-m-bottom_x-small"></lightning-icon>
+                    <p>No products found.</p>
+                </div>
+            </template>
+
+            <template lwc:if={isEmpty}>
+                <div class="ps-empty">
+                    <lightning-icon icon-name="utility:product" size="small" class="slds-m-bottom_x-small"></lightning-icon>
+                    <p>No products in pricebook.</p>
+                </div>
+            </template>
+        </div>
+
+    </div>
+</template>

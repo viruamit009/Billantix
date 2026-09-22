@@ -1,0 +1,17 @@
+<template>
+    <div class="action-wrapper">
+        <div class="action-header">
+            <span class="action-title">Billing Dashboard</span>
+            <lightning-button-icon
+                icon-name="utility:close"
+                variant="bare"
+                onclick={handleClose}
+                alternative-text="Close"
+                class="close-btn">
+            </lightning-button-icon>
+        </div>
+        <div class="action-body">
+            <c-account-billing-dashboard record-id={recordId}></c-account-billing-dashboard>
+        </div>
+    </div>
+</template>

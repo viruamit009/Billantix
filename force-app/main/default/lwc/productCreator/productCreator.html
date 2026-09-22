@@ -1,0 +1,130 @@
+<template>
+    <div class="creator-root">
+
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar__left">
+                <lightning-icon icon-name="standard:product" size="small" class="slds-var-m-right_small"></lightning-icon>
+                <span class="slds-text-heading_small">New Product</span>
+            </div>
+            <div class="top-bar__right">
+                <lightning-button label="Cancel" onclick={handleCancel} class="slds-var-m-right_x-small"></lightning-button>
+                <lightning-button variant="brand" label="Save Product" onclick={handleSave} disabled={isLoading}></lightning-button>
+            </div>
+        </div>
+
+        <!-- Error Banner -->
+        <template lwc:if={errorMessage}>
+            <div class="error-banner" role="alert">
+                <lightning-icon icon-name="utility:error" alternative-text="Error" size="x-small" class="slds-var-m-right_x-small"></lightning-icon>
+                {errorMessage}
+            </div>
+        </template>
+
+        <!-- Loading -->
+        <template lwc:if={isLoading}>
+            <lightning-spinner alternative-text="Saving..." size="medium"></lightning-spinner>
+        </template>
+
+        <!-- Form -->
+        <div class="form-card">
+            <div class="form-section-title">Product Details</div>
+            <div class="form-grid">
+
+                <div class="form-field form-field--full">
+                    <lightning-input
+                        label="Product Name"
+                        value={fields.Name}
+                        data-field="Name"
+                        onchange={handleFieldChange}
+                        required>
+                    </lightning-input>
+                </div>
+
+                <div class="form-field">
+                    <lightning-input
+                        label="Product Code"
+                        value={fields.ProductCode}
+                        data-field="ProductCode"
+                        onchange={handleFieldChange}>
+                    </lightning-input>
+                </div>
+
+                <div class="form-field">
+                    <lightning-combobox
+                        label="Product Type"
+                        value={fields.Product_Type__c}
+                        options={productTypeOptions}
+                        data-field="Product_Type__c"
+                        onchange={handleFieldChange}
+                        required
+                        placeholder="Select type...">
+                    </lightning-combobox>
+                </div>
+
+                <div class="form-field">
+                    <lightning-input
+                        label="Unit Price"
+                        type="number"
+                        value={unitPrice}
+                        formatter="currency"
+                        step="0.01"
+                        min="0"
+                        onchange={handleUnitPriceChange}
+                        required>
+                    </lightning-input>
+                </div>
+
+                <!-- UOM — Usage-Based only -->
+                <template lwc:if={showUOM}>
+                    <div class="form-field">
+                        <lightning-combobox
+                            label="Unit of Measure"
+                            value={fields.UOM__c}
+                            options={uomOptions}
+                            data-field="UOM__c"
+                            onchange={handleFieldChange}
+                            placeholder="Select UOM...">
+                        </lightning-combobox>
+                    </div>
+                </template>
+
+                <!-- Billing Frequency — Recurring + Usage-Based -->
+                <template lwc:if={showBillingFrequency}>
+                    <div class="form-field">
+                        <lightning-combobox
+                            label="Billing Frequency"
+                            value={fields.Billing_Frequency__c}
+                            options={billingFrequencyOptions}
+                            data-field="Billing_Frequency__c"
+                            onchange={handleFieldChange}
+                            placeholder="Select frequency...">
+                        </lightning-combobox>
+                    </div>
+                </template>
+
+                <div class="form-field form-field--full">
+                    <lightning-textarea
+                        label="Description"
+                        value={fields.Description}
+                        data-field="Description"
+                        onchange={handleFieldChange}
+                        max-length="1000">
+                    </lightning-textarea>
+                </div>
+
+                <div class="form-field">
+                    <lightning-input
+                        type="checkbox"
+                        label="Active"
+                        checked={fields.IsActive}
+                        data-field="IsActive"
+                        onchange={handleCheckboxChange}>
+                    </lightning-input>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</template>

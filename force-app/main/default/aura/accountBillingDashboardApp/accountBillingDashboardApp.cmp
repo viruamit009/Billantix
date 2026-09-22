@@ -1,0 +1,7 @@
+<aura:component implements="lightning:isUrlAddressable" access="global">
+    <aura:attribute name="accountId" type="String" />
+
+    <aura:handler name="init" value="{!this}" action="{!c.init}" />
+
+    <c:accountBillingDashboard recordId="{!v.accountId}" />
+</aura:component>

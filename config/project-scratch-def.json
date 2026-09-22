@@ -1,0 +1,25 @@
+{
+  "orgName": "Billantix",
+  "edition": "developer",
+  "namespace": "Billantix",
+  "hasSampleData": false,
+  "features": [
+    "EnableSetPasswordInApi"
+  ],
+  "settings": {
+    "lightningExperienceSettings": {
+      "enableS1DesktopEnabled": true
+    },
+    "mobileSettings": {
+      "enableS1EncryptedStoragePref2": false
+    },
+    "orderSettings": {
+      "enableOrders": true,
+      "enableNegativeQuantity": true,
+      "enableReductionOrders": true
+    },
+    "quoteSettings": {
+      "enableQuote": true
+    }
+  }
+}

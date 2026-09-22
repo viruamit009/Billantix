@@ -1,0 +1,17 @@
+<template>
+    <div class="action-wrapper">
+        <div class="action-header">
+            <span class="action-title">Edit Line Items</span>
+            <lightning-button-icon
+                icon-name="utility:close"
+                variant="bare"
+                onclick={handleClose}
+                alternative-text="Close"
+                class="close-btn">
+            </lightning-button-icon>
+        </div>
+        <div class="action-body">
+            <c-quote-line-editor record-id={recordId}></c-quote-line-editor>
+        </div>
+    </div>
+</template>

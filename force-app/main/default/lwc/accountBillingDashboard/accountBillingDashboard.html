@@ -1,0 +1,149 @@
+<template>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="dashboard-header">
+            <lightning-icon icon-name="standard:account" size="small" class="slds-m-right_x-small"></lightning-icon>
+            <h1 class="slds-text-heading_medium">Billing Dashboard</h1>
+        </div>
+
+        <!-- Error -->
+        <template if:true={error}>
+            <div class="slds-p-around_medium">
+                <lightning-badge label={error} class="slds-theme_error"></lightning-badge>
+            </div>
+        </template>
+
+        <!-- Tabs -->
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <lightning-tabset variant="scoped" active-tab-value="overview">
+
+                <!-- OVERVIEW -->
+                <lightning-tab label="Overview" value="overview" icon-name="utility:home">
+                    <div class="slds-p-top_medium">
+                        <template if:true={overview}>
+                            <div class="slds-grid slds-gutters slds-wrap">
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-4">
+                                    <div class="stat-card">
+                                        <p class="stat-label">Active Subscriptions</p>
+                                        <p class="stat-value blue">{overview.activeSubscriptions}</p>
+                                    </div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-4">
+                                    <div class="stat-card">
+                                        <p class="stat-label">Active Entitlements</p>
+                                        <p class="stat-value green">{overview.activeEntitlements}</p>
+                                    </div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-4">
+                                    <div class="stat-card">
+                                        <p class="stat-label">Open Invoices</p>
+                                        <p class="stat-value orange">{overview.openInvoices}</p>
+                                    </div>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2 slds-large-size_1-of-4">
+                                    <div class="stat-card">
+                                        <p class="stat-label">Total Balance Due</p>
+                                        <p class="stat-value red">{formattedBalanceDue}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <template if:true={overview.lastPaymentAmount}>
+                                <div class="slds-m-top_medium last-payment">
+                                    <lightning-icon icon-name="utility:check" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                                    Last payment: <strong>{formattedLastPayment}</strong> on {overview.lastPaymentDate}
+                                </div>
+                            </template>
+                        </template>
+                        <template if:false={overview}>
+                            <lightning-spinner alternative-text="Loading overview..."></lightning-spinner>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- ORDERS -->
+                <lightning-tab label="Orders" value="orders" icon-name="standard:orders">
+                    <div class="tab-content">
+                        <template if:true={orders}>
+                            <lightning-datatable
+                                key-field="Id"
+                                data={orders}
+                                columns={orderColumns}
+                                hide-checkbox-column
+                                sorted-by={orderSortField}
+                                sorted-direction={orderSortDir}
+                                onsort={handleOrderSort}
+                            ></lightning-datatable>
+                            <template if:true={noOrders}>
+                                <p class="empty-msg">No orders found.</p>
+                            </template>
+                        </template>
+                        <template if:false={orders}>
+                            <lightning-spinner alternative-text="Loading orders..."></lightning-spinner>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- SUBSCRIPTIONS -->
+                <lightning-tab label="Subscriptions" value="subscriptions" icon-name="utility:refresh">
+                    <div class="tab-content">
+                        <template if:true={subscriptions}>
+                            <lightning-datatable
+                                key-field="Id"
+                                data={subscriptions}
+                                columns={subscriptionColumns}
+                                hide-checkbox-column
+                            ></lightning-datatable>
+                            <template if:true={noSubscriptions}>
+                                <p class="empty-msg">No subscriptions found.</p>
+                            </template>
+                        </template>
+                        <template if:false={subscriptions}>
+                            <lightning-spinner alternative-text="Loading subscriptions..."></lightning-spinner>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- ENTITLEMENTS -->
+                <lightning-tab label="Entitlements" value="entitlements" icon-name="utility:key">
+                    <div class="tab-content">
+                        <template if:true={entitlements}>
+                            <lightning-datatable
+                                key-field="Id"
+                                data={entitlements}
+                                columns={entitlementColumns}
+                                hide-checkbox-column
+                            ></lightning-datatable>
+                            <template if:true={noEntitlements}>
+                                <p class="empty-msg">No entitlements found.</p>
+                            </template>
+                        </template>
+                        <template if:false={entitlements}>
+                            <lightning-spinner alternative-text="Loading entitlements..."></lightning-spinner>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+                <!-- INVOICES -->
+                <lightning-tab label="Invoices" value="invoices" icon-name="standard:invoice">
+                    <div class="tab-content">
+                        <template if:true={invoices}>
+                            <lightning-datatable
+                                key-field="Id"
+                                data={invoices}
+                                columns={invoiceColumns}
+                                hide-checkbox-column
+                            ></lightning-datatable>
+                            <template if:true={noInvoices}>
+                                <p class="empty-msg">No invoices found.</p>
+                            </template>
+                        </template>
+                        <template if:false={invoices}>
+                            <lightning-spinner alternative-text="Loading invoices..."></lightning-spinner>
+                        </template>
+                    </div>
+                </lightning-tab>
+
+            </lightning-tabset>
+        </div>
+    </div>
+</template>

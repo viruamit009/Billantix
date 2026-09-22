@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>CollectionStatus__c</fullName>
+    <label>Collection Status</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Open</fullName><default>true</default><label>Open</label></value>
+            <value><fullName>Partially Paid</fullName><default>false</default><label>Partially Paid</label></value>
+            <value><fullName>Paid</fullName><default>false</default><label>Paid</label></value>
+            <value><fullName>In Collections</fullName><default>false</default><label>In Collections</label></value>
+            <value><fullName>Written Off</fullName><default>false</default><label>Written Off</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
