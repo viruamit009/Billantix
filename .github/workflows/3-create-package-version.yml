@@ -33,18 +33,39 @@ jobs:
           sf org login sfdx-url -f ./DEVHUB_AUTH_URL.txt -a devhub --set-default-dev-hub
           rm -f ./DEVHUB_AUTH_URL.txt
 
+      - name: Ensure package is registered on Dev Hub
+        run: |
+          EXISTING_ID=$(sf package list --target-dev-hub devhub --json | jq -r '.result[] | select(.NamespacePrefix == "Billantix") | .Id' | head -n1)
+          if [ -z "$EXISTING_ID" ]; then
+            echo "No package registered for namespace 'Billantix' on this Dev Hub — creating it."
+            sf package create \
+              --name Billantix \
+              --package-type Managed \
+              --path force-app \
+              --target-dev-hub devhub \
+              --json
+          else
+            echo "Package already registered on this Dev Hub: $EXISTING_ID"
+          fi
+
       - name: Create package version
         run: |
+          set +e
           sf package version create \
             --package Billantix \
+            --definition-file config/project-scratch-def.json \
             --installation-key-bypass \
             --code-coverage \
             --wait 90 \
             --target-dev-hub devhub \
             --json > version-create-result.json
+          CLI_EXIT_CODE=$?
+          set -e
           cat version-create-result.json
+          exit $CLI_EXIT_CODE
 
       - name: Upload result
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: package-version-create-result
