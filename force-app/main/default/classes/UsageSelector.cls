@@ -23,13 +23,13 @@ public with sharing class UsageSelector {
     public static Map<Id, Decimal> getTotalPendingQuantityByOrderItem(Set<Id> orderItemIds) {
         Map<Id, Decimal> totalByItem = new Map<Id, Decimal>();
         for (AggregateResult ar : [
-            SELECT Order_Item__c, SUM(Quantity__c) total
+            SELECT Order_Item__c orderItemId, SUM(Quantity__c) total
             FROM Usage__c
             WHERE Order_Item__c IN :orderItemIds
             AND Status__c = 'Pending'
             GROUP BY Order_Item__c
         ]) {
-            totalByItem.put((Id) ar.get('Order_Item__c'), (Decimal) ar.get('total'));
+            totalByItem.put((Id) ar.get('orderItemId'), (Decimal) ar.get('total'));
         }
         return totalByItem;
     }
