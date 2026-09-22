@@ -1,0 +1,34 @@
+name: 2. Deploy to UAT
+
+on:
+  push:
+    branches:
+      - UAT
+
+concurrency:
+  group: deploy-uat
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli
+
+      - name: Authenticate to BillantixDevOrg
+        run: |
+          echo "${{ secrets.BILLANTIXDEVORG_SFDX_AUTH_URL }}" > ./DEVORG_AUTH_URL.txt
+          sf org login sfdx-url -f ./DEVORG_AUTH_URL.txt -a devorg
+          rm -f ./DEVORG_AUTH_URL.txt
+
+      - name: Deploy source
+        run: |
+          sf project deploy start \
+            --target-org devorg \
+            --test-level RunLocalTests \
+            --wait 60

@@ -1,0 +1,34 @@
+name: 4. Promote Package Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      packageVersionId:
+        description: "Package version Id to promote (04t...), or an alias from sfdx-project.json"
+        required: true
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: package-promote
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli
+
+      - name: Authenticate to Dev Hub
+        run: |
+          echo "${{ secrets.DEVHUB_SFDX_AUTH_URL }}" > ./DEVHUB_AUTH_URL.txt
+          sf org login sfdx-url -f ./DEVHUB_AUTH_URL.txt -a devhub --set-default-dev-hub
+          rm -f ./DEVHUB_AUTH_URL.txt
+
+      - name: Promote package version
+        run: |
+          sf package version promote \
+            --package "${{ github.event.inputs.packageVersionId }}" \
+            --target-dev-hub devhub \
+            --no-prompt \
+            --json
