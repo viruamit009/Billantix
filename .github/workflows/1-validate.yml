@@ -6,6 +6,8 @@ on:
       - UAT
     paths:
       - "force-app/**"
+    paths:
+      - "force-app/**"
 
 concurrency:
   group: validate-${{ github.event.pull_request.number }}
