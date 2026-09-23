@@ -24,16 +24,33 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check for changes under force-app since last package version
+        id: change-check
+        run: |
+          LAST_MARKER_SHA=$(git log --grep="^chore: record new Billantix package version" -1 --format=%H || true)
+          if [ -z "$LAST_MARKER_SHA" ]; then
+            echo "No previous package version commit found — proceeding."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$LAST_MARKER_SHA" HEAD -- force-app; then
+            echo "No changes under force-app/ since the last package version was created ($LAST_MARKER_SHA) — nothing to package."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install Salesforce CLI
+        if: steps.change-check.outputs.has_changes == 'true'
         run: npm install --global @salesforce/cli
 
       - name: Authenticate to Dev Hub
+        if: steps.change-check.outputs.has_changes == 'true'
         run: |
           echo "${{ secrets.DEVHUB_SFDX_AUTH_URL }}" > ./DEVHUB_AUTH_URL.txt
           sf org login sfdx-url -f ./DEVHUB_AUTH_URL.txt -a devhub --set-default-dev-hub
           rm -f ./DEVHUB_AUTH_URL.txt
 
       - name: Ensure package is registered on Dev Hub
+        if: steps.change-check.outputs.has_changes == 'true'
         run: |
           EXISTING_ID=$(sf package list --target-dev-hub devhub --json | jq -r '.result[] | select(.NamespacePrefix == "Billantix") | .Id' | head -n1)
           if [ -z "$EXISTING_ID" ]; then
@@ -49,10 +66,12 @@ jobs:
           fi
 
       - name: Create package version
+        if: steps.change-check.outputs.has_changes == 'true'
         run: |
           set +e
           sf package version create \
             --package Billantix \
+            --definition-file config/project-scratch-def.json \
             --installation-key-bypass \
             --code-coverage \
             --wait 90 \
@@ -64,13 +83,14 @@ jobs:
           exit $CLI_EXIT_CODE
 
       - name: Upload result
-        if: always()
+        if: always() && steps.change-check.outputs.has_changes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: package-version-create-result
           path: version-create-result.json
 
       - name: Commit updated sfdx-project.json
+        if: steps.change-check.outputs.has_changes == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
