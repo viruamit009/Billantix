@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - UAT
+    paths:
+      - "force-app/**"
+    paths:
+      - "force-app/**"
 
 concurrency:
   group: deploy-uat
