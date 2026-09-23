@@ -1,4 +1,4 @@
-name: 3. Create Package Version
+name: 4. Create Package Version
 
 on:
   workflow_dispatch:
@@ -23,6 +23,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Require running from main
+        run: |
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "::error::This workflow can only be run against the 'main' branch. You selected '${{ github.ref_name }}'. Re-run it with 'main' picked in the branch dropdown."
+            exit 1
+          fi
 
       - name: Check for changes under force-app since last package version
         id: change-check
