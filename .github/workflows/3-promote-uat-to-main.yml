@@ -24,21 +24,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: read
-      pull-requests: write
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
 
-      - name: Open PR to promote UAT into main
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Merge UAT into main
         run: |
-          EXISTING=$(gh pr list --base main --head UAT --state open --json number --jq '.[0].number')
-          if [ -n "$EXISTING" ]; then
-            echo "PR already open: #$EXISTING — nothing to do. Merge that PR to promote UAT into main."
-          else
-            gh pr create --base main --head UAT \
-              --title "Promote UAT to main" \
-              --body "Automated. Merge this PR to bring main up to date with UAT."
-          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin UAT
+          git merge origin/UAT --no-edit -m "Merge UAT into main"
+          git push origin main
