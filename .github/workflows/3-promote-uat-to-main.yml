@@ -1,0 +1,44 @@
+name: 3. Promote UAT to Main
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: promote-uat-to-main
+  cancel-in-progress: false
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require running from UAT
+        run: |
+          if [ "${{ github.ref }}" != "refs/heads/UAT" ]; then
+            echo "::error::This workflow can only be run against the 'UAT' branch. You selected '${{ github.ref_name }}'. Re-run it with 'UAT' picked in the branch dropdown."
+            exit 1
+          fi
+
+  promote-to-main:
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Open PR to promote UAT into main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          EXISTING=$(gh pr list --base main --head UAT --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            echo "PR already open: #$EXISTING — nothing to do. Merge that PR to promote UAT into main."
+          else
+            gh pr create --base main --head UAT \
+              --title "Promote UAT to main" \
+              --body "Automated. Merge this PR to bring main up to date with UAT."
+          fi
