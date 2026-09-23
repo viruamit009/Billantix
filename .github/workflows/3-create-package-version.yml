@@ -24,13 +24,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check for changes since last package version
+      - name: Check for changes under force-app since last package version
         id: change-check
         run: |
           LAST_MARKER_SHA=$(git log --grep="^chore: record new Billantix package version" -1 --format=%H || true)
-          CURRENT_SHA=$(git rev-parse HEAD)
-          if [ -n "$LAST_MARKER_SHA" ] && [ "$LAST_MARKER_SHA" = "$CURRENT_SHA" ]; then
-            echo "No commits on this branch since the last package version was created ($LAST_MARKER_SHA) — nothing to package."
+          if [ -z "$LAST_MARKER_SHA" ]; then
+            echo "No previous package version commit found — proceeding."
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$LAST_MARKER_SHA" HEAD -- force-app; then
+            echo "No changes under force-app/ since the last package version was created ($LAST_MARKER_SHA) — nothing to package."
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
           else
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
