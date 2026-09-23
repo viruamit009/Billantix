@@ -25,34 +25,50 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require running from UAT
+        run: |
+          if [ "${{ github.ref }}" != "refs/heads/UAT" ]; then
+            echo "::error::This workflow can only be run against the 'UAT' branch. You selected '${{ github.ref_name }}'. Re-run it with 'UAT' picked in the branch dropdown."
+            exit 1
+          fi
+
   promote-to-main:
+    needs: guard
     if: inputs.promoteToMain
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: write
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: main
 
-      - name: Merge UAT into main
+      - name: Open PR to promote UAT into main
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin UAT
-          git merge origin/UAT --no-edit -m "Merge UAT into main"
-          git push origin main
+          EXISTING=$(gh pr list --base main --head UAT --state open --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            echo "PR already open: #$EXISTING — nothing to do. Merge that PR to promote UAT into main."
+          else
+            gh pr create --base main --head UAT \
+              --title "Promote UAT to main" \
+              --body "Automated by the Release workflow. Merge this PR to bring main up to date with UAT."
+          fi
 
   create-package-version:
-    needs: promote-to-main
-    if: always() && inputs.createPackageVersion && (needs.promote-to-main.result == 'success' || needs.promote-to-main.result == 'skipped')
+    needs: [guard, promote-to-main]
+    if: always() && needs.guard.result == 'success' && inputs.createPackageVersion && (needs.promote-to-main.result == 'success' || needs.promote-to-main.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:
       contents: write
+      pull-requests: write
     outputs:
       versionId: ${{ steps.create.outputs.versionId }}
     steps:
@@ -130,20 +146,27 @@ jobs:
           name: package-version-create-result
           path: version-create-result.json
 
-      - name: Commit updated sfdx-project.json
+      - name: Open PR with updated sfdx-project.json
         if: steps.change-check.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if ! git diff --quiet -- sfdx-project.json; then
+            BRANCH="bot/package-version-${{ github.run_id }}"
+            git checkout -b "$BRANCH"
             git add sfdx-project.json
-            git commit -m "chore: record new Billantix package version [skip ci]"
-            git push
+            git commit -m "chore: record new Billantix package version"
+            git push origin "$BRANCH"
+            gh pr create --base main --head "$BRANCH" \
+              --title "chore: record new Billantix package version" \
+              --body "Automated by the Release workflow. Merge this PR to keep sfdx-project.json's package version aliases in sync with the Dev Hub."
           fi
 
   promote-package-version:
-    needs: create-package-version
-    if: always() && inputs.promotePackageVersion && (needs.create-package-version.result == 'success' || needs.create-package-version.result == 'skipped')
+    needs: [guard, create-package-version]
+    if: always() && needs.guard.result == 'success' && inputs.promotePackageVersion && (needs.create-package-version.result == 'success' || needs.create-package-version.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: package-promote
