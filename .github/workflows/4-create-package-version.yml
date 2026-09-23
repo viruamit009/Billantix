@@ -1,61 +1,34 @@
-name: 3. Release (Promote to Main / Create Package / Promote Package)
+name: 4. Create Package Version
 
 on:
   workflow_dispatch:
     inputs:
-      promoteToMain:
-        description: "Promote UAT to Main"
-        type: boolean
-        default: true
-      createPackageVersion:
-        description: "Create Package Version (runs against main)"
-        type: boolean
-        default: true
-      promotePackageVersion:
-        description: "Promote Package Version to Released (irreversible)"
-        type: boolean
-        default: false
-      packageVersionIdToPromote:
-        description: "Package version Id to promote (04t...) — only needed if NOT also creating one in this same run"
+      versionDescription:
+        description: "Optional description for this package version"
         required: false
         default: ""
 
 concurrency:
-  group: release
+  group: package-version-create
   cancel-in-progress: false
 
 jobs:
-  promote-to-main:
-    if: inputs.promoteToMain
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: main
-
-      - name: Merge UAT into main
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin UAT
-          git merge origin/UAT --no-edit -m "Merge UAT into main"
-          git push origin main
-
-  create-package-version:
-    needs: promote-to-main
-    if: always() && inputs.createPackageVersion && (needs.promote-to-main.result == 'success' || needs.promote-to-main.result == 'skipped')
+  create-version:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:
       contents: write
+      pull-requests: write
     outputs:
       versionId: ${{ steps.create.outputs.versionId }}
     steps:
+      - name: Require running from main
+        run: |
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "::error::This workflow can only be run against the 'main' branch. You selected '${{ github.ref_name }}'. Re-run it with 'main' picked in the branch dropdown."
+            exit 1
+          fi
+
       - name: Checkout main
         uses: actions/checkout@v4
         with:
@@ -130,53 +103,20 @@ jobs:
           name: package-version-create-result
           path: version-create-result.json
 
-      - name: Commit updated sfdx-project.json
+      - name: Open PR with updated sfdx-project.json
         if: steps.change-check.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if ! git diff --quiet -- sfdx-project.json; then
+            BRANCH="bot/package-version-${{ github.run_id }}"
+            git checkout -b "$BRANCH"
             git add sfdx-project.json
-            git commit -m "chore: record new Billantix package version [skip ci]"
-            git push
+            git commit -m "chore: record new Billantix package version"
+            git push origin "$BRANCH"
+            gh pr create --base main --head "$BRANCH" \
+              --title "chore: record new Billantix package version" \
+              --body "Automated. Merge this PR to keep sfdx-project.json's package version aliases in sync with the Dev Hub."
           fi
-
-  promote-package-version:
-    needs: create-package-version
-    if: always() && inputs.promotePackageVersion && (needs.create-package-version.result == 'success' || needs.create-package-version.result == 'skipped')
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    environment: package-promote
-    steps:
-      - name: Determine version to promote
-        id: determine
-        run: |
-          FROM_JOB="${{ needs.create-package-version.outputs.versionId }}"
-          FROM_INPUT="${{ inputs.packageVersionIdToPromote }}"
-          if [ -n "$FROM_JOB" ]; then
-            echo "Using version created earlier in this same run: $FROM_JOB"
-            echo "versionId=$FROM_JOB" >> "$GITHUB_OUTPUT"
-          elif [ -n "$FROM_INPUT" ]; then
-            echo "Using version Id provided as input: $FROM_INPUT"
-            echo "versionId=$FROM_INPUT" >> "$GITHUB_OUTPUT"
-          else
-            echo "::error::No package version Id available to promote — either enable createPackageVersion in this run, or provide packageVersionIdToPromote."
-            exit 1
-          fi
-
-      - name: Install Salesforce CLI
-        run: npm install --global @salesforce/cli
-
-      - name: Authenticate to Dev Hub
-        run: |
-          echo "${{ secrets.DEVHUB_SFDX_AUTH_URL }}" > ./DEVHUB_AUTH_URL.txt
-          sf org login sfdx-url -f ./DEVHUB_AUTH_URL.txt -a devhub --set-default-dev-hub
-          rm -f ./DEVHUB_AUTH_URL.txt
-
-      - name: Promote package version
-        run: |
-          sf package version promote \
-            --package "${{ steps.determine.outputs.versionId }}" \
-            --target-dev-hub devhub \
-            --no-prompt \
-            --json
