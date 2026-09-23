@@ -1,3 +1,4 @@
+// Pipeline smoke test — verifies Validate/Deploy/Release trigger correctly end to end.
 public with sharing class PricingService {
 
     public static Decimal calculateLineAmount(OrderItem item, Decimal usageQuantity) {
