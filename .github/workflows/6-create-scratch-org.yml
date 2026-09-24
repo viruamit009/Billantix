@@ -1,0 +1,52 @@
+name: 6. Create Scratch Org for Branch
+
+on:
+  create
+
+jobs:
+  create-scratch-org:
+    if: github.ref_type == 'branch' && startsWith(github.ref_name, 'scratch/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli
+
+      - name: Authenticate to Dev Hub
+        run: |
+          echo "${{ secrets.DEVHUB_SFDX_AUTH_URL }}" > ./DEVHUB_AUTH_URL.txt
+          sf org login sfdx-url -f ./DEVHUB_AUTH_URL.txt -a devhub --set-default-dev-hub
+          rm -f ./DEVHUB_AUTH_URL.txt
+
+      - name: Create scratch org
+        run: |
+          ALIAS=$(echo "${{ github.ref_name }}" | tr '/' '-')
+          echo "SCRATCH_ALIAS=$ALIAS" >> "$GITHUB_ENV"
+          sf org create scratch \
+            --target-dev-hub devhub \
+            --definition-file config/project-scratch-def.json \
+            --alias "$ALIAS" \
+            --duration-days 7 \
+            --wait 20 \
+            --json
+
+      - name: Deploy source
+        run: |
+          sf project deploy start \
+            --target-org "$SCRATCH_ALIAS" \
+            --source-dir force-app \
+            --wait 30
+
+      - name: Post login link to job summary
+        run: |
+          LOGIN_URL=$(sf org open --target-org "$SCRATCH_ALIAS" --url-only --json | jq -r '.result.url')
+          {
+            echo "### Scratch org ready for \`${{ github.ref_name }}\`"
+            echo ""
+            echo "[Open scratch org]($LOGIN_URL)"
+            echo ""
+            echo "Alias: \`$SCRATCH_ALIAS\` — expires in 7 days"
+          } >> "$GITHUB_STEP_SUMMARY"
