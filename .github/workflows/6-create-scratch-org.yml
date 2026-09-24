@@ -30,7 +30,7 @@ jobs:
             --definition-file config/project-scratch-def.json \
             --edition developer \
             --alias "$ALIAS" \
-            --duration-days 7 \
+            --duration-days 30 \
             --wait 20 \
             --json
 
@@ -49,5 +49,5 @@ jobs:
             echo ""
             echo "[Open scratch org]($LOGIN_URL)"
             echo ""
-            echo "Alias: \`$SCRATCH_ALIAS\` — expires in 7 days"
+            echo "Alias: \`$SCRATCH_ALIAS\` — expires in 30 days"
           } >> "$GITHUB_STEP_SUMMARY"
