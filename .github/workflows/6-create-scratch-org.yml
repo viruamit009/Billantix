@@ -28,6 +28,7 @@ jobs:
           sf org create scratch \
             --target-dev-hub devhub \
             --definition-file config/project-scratch-def.json \
+            --edition developer \
             --alias "$ALIAS" \
             --duration-days 7 \
             --wait 20 \
